@@ -130,7 +130,34 @@ router.put("/:id", async (req, res) => {
 
 // Delete a task by id for the authenticated user
 router.delete("/:id", async (req, res) => {
-    res.sendStatus(501) // Not implemented
+    if(req.params.id == undefined) {
+        res.status(400).json({error: "Task id required"})
+        return
+    }
+
+    try {
+        const deleted = await db`
+            DELETE FROM tasks
+            WHERE user_id = ${req.user.id} AND id = ${req.params.id}
+            RETURNING id
+        `
+
+        if(deleted == undefined || deleted.length === 0) {
+            res.status(404).json({ error: "Task not found" })
+            return
+        }
+
+        res.sendStatus(204)
+    } catch (err) {
+        if(err.code === "22P02") { // Invalid UUID format
+            res.status(400).json({ error: "Invalid task ID format" })
+            return
+        }
+
+        console.error(err)
+        res.status(500).json({ error: "Error while deleting task" })
+    }
+    
 })
 
 exports.default = router
