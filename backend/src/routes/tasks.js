@@ -8,7 +8,26 @@ const titleRegex = /^[a-zA-Z0-9\s\-_,\.;:()]+$/
 
 // Get all tasks for the authenticated user
 router.get("/", async (req, res) => {
-    res.sendStatus(501) // Not implemented
+    try {
+        const tasks = await db`
+            SELECT
+                id,
+                user_id,
+                title,
+                description,
+                completed,
+                start_date,
+                due_date
+            FROM tasks
+            WHERE user_id = ${req.user.id}
+            ORDER BY due_date NULLS LAST, start_date NULLS LAST
+        `
+
+        res.json(tasks)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: "Error while fetching tasks" })
+    }
 })
 
 // Get a specific task by id for the authenticated user
