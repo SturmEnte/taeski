@@ -32,7 +32,42 @@ router.get("/", async (req, res) => {
 
 // Get a specific task by id for the authenticated user
 router.get("/:id", async (req, res) => {
-    res.sendStatus(501) // Not implemented
+    if(req.params.id == undefined) {
+        res.status(400).json({error: "Task id required"})
+        return
+    }
+
+    try {
+        const tasks = await db`
+            SELECT
+                id,
+                user_id,
+                title,
+                description,
+                completed,
+                start_date,
+                due_date
+            FROM tasks
+            WHERE user_id = ${req.user.id} AND id = ${req.params.id}
+            ORDER BY due_date NULLS LAST, start_date NULLS LAST
+        `
+
+        if(tasks.length === 0) {
+            res.status(404).json({ error: "Task not found" })
+            return
+        }
+
+        res.json(tasks[0])
+    } catch (err) {
+
+        if(err.code === "22P02") { // Invalid UUID format
+            res.status(400).json({ error: "Invalid task ID format" })
+            return
+        }
+
+        console.error(err)
+        res.status(500).json({ error: "Error while fetching tasks. Did you provide a valid task ID?" })
+    }
 })
 
 // Create a new task for the authenticated user
