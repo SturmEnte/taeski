@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap');
+
+:root {
+  font-family: 'DM Sans', 'Avenir Next', sans-serif;
+  color: #202d28;
+  background: #f4f6f2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  --ink: #202d28;
+  --muted: #78837d;
+  --line: #e4e9e4;
+  --paper: #fbfcfa;
+  --green: #28745d;
+  --green-dark: #1d5948;
+  --mint: #e3f1e9;
+  --coral: #df725d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button, input, textarea, select { font: inherit; }
+button { color: inherit; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 3px solid #8fc4aa;
+  outline-offset: 2px;
+}
+
+::selection { color: #173b30; background: #cce8d7; }
