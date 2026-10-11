@@ -8,13 +8,14 @@ const authMiddleware = require("./middleware/auth").default
 
 const app = express()
 
-app.use(authMiddleware)
-
 app.use(express.json())
 
 app.use("/auth", auth)
+app.use(authMiddleware)
 app.use("/tasks", tasks)
 
-app.listen(process.env.PORT, () => {
-    console.log("Listening to port", process.env.PORT)
+const port = process.env.PORT ?? 3000
+
+app.listen(port, () => {
+    console.log("Listening to port", port)
 })
