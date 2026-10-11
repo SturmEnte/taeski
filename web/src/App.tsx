@@ -217,7 +217,7 @@ function App() {
       <aside className="sidebar">
         <a className="brand" href="#today" onClick={() => setActiveView('today')}>
           <span className="brand-mark"><Sparkles size={18} /></span>
-          <span>taeski<span className="brand-period">.</span></span>
+          <span>Täski<span className="brand-period">.</span></span>
         </a>
               <button className="new-task-button" onClick={() => { setEditingTask(null); setSelectedDate(''); setShowEditor(true) }}>
           <Plus size={18} /> <span>New task</span> <kbd>N</kbd>
@@ -297,7 +297,7 @@ function AuthScreen({ onSubmit, notice }: { onSubmit: (event: FormEvent<HTMLForm
   return (
     <main className="auth-screen">
       <section className="auth-aside">
-        <a className="brand auth-brand" href="#home"><span className="brand-mark"><Sparkles size={18} /></span><span>taeski<span className="brand-period">.</span></span></a>
+        <a className="brand auth-brand" href="#home"><span className="brand-mark"><Sparkles size={18} /></span><span>Täski<span className="brand-period">.</span></span></a>
         <div className="auth-note"><span className="auth-index">01 / MAKE ROOM</span><h1>Small steps.<br /><em>Clear mind.</em></h1><p>Keep the moving pieces together, and give your attention back to the work in front of you.</p></div>
         <div className="auth-decoration"><span>PLAN</span><span>DO</span><span>RESET</span><div className="orbit orbit-one" /><div className="orbit orbit-two" /></div>
         <span className="auth-copyright">A calmer way to get things done.</span>
