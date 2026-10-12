@@ -88,10 +88,6 @@ function localToday() {
   return dateKey(new Date())
 }
 
-function taskDate(value: string | null) {
-  return value?.slice(0, 10) ?? null
-}
-
 function displayDate(value: string | null) {
   if (!value) return 'No date'
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(`${value.slice(0, 10)}T12:00:00`))
@@ -121,33 +117,19 @@ function App() {
   }, [token])
 
   const today = localToday()
-  const isTodayTask = (task: Task) => {
-    const startDate = taskDate(task.start_date)
-    const dueDate = taskDate(task.due_date)
-    return (!startDate || startDate <= today) && (!dueDate || dueDate <= today || Boolean(startDate && startDate <= today))
-  }
   const visibleTasks = tasks.filter((task) => {
     const matchesText = `${task.title} ${task.description ?? ''}`.toLowerCase().includes(query.toLowerCase())
     if (!matchesText) return false
     if (activeView === 'completed') return task.completed
     if (task.completed) return false
-    if (activeView === 'today') return isTodayTask(task)
-    if (activeView === 'upcoming') {
-      const startDate = taskDate(task.start_date)
-      const dueDate = taskDate(task.due_date)
-      return startDate ? startDate > today : Boolean(dueDate && dueDate > today)
-    }
+    if (activeView === 'today') return (!task.start_date || task.start_date <= today) && (!task.due_date || task.due_date <= today || Boolean(task.start_date && task.start_date <= today))
+    if (activeView === 'upcoming') return task.start_date ? task.start_date > today : Boolean(task.due_date && task.due_date > today)
     return activeView === 'all' || activeView === 'calendar'
   }).sort((a, b) => a.priority - b.priority || (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999'))
 
   const counts: Record<View, number> = {
-    today: tasks.filter((task) => !task.completed && isTodayTask(task)).length,
-    upcoming: tasks.filter((task) => {
-      if (task.completed) return false
-      const startDate = taskDate(task.start_date)
-      const dueDate = taskDate(task.due_date)
-      return startDate ? startDate > today : Boolean(dueDate && dueDate > today)
-    }).length,
+    today: tasks.filter((task) => !task.completed && (!task.start_date || task.start_date <= today) && (!task.due_date || task.due_date <= today || Boolean(task.start_date && task.start_date <= today))).length,
+    upcoming: tasks.filter((task) => !task.completed && (task.due_date ? task.due_date > today : Boolean(task.start_date && task.start_date > today))).length,
     all: tasks.filter((task) => !task.completed).length,
     completed: tasks.filter((task) => task.completed).length,
     calendar: 0,
