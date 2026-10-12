@@ -9,37 +9,14 @@ const recurrences = ["none", "daily", "weekly", "monthly", "yearly"]
 
 function isValidDate(value) {
     if(value == null) return true
-    if(typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        console.log("Invalid date format:", value)
-        return false
-    }
+    if(typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
     const parsed = new Date(`${value}T00:00:00.000Z`)
     return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
 }
 
-function normalizeTaskDates(body) {
-    const normalized = { ...body }
-    for(const field of ["start_date", "due_date", "repeat_until"]) {
-        const value = normalized[field]
-        if(typeof value === "string" && /^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/.test(value)) {
-            normalized[field] = value.slice(0, 10)
-        }
-    }
-    return normalized
-}
-
-function dateOnly(value) {
-    if(value instanceof Date) {
-        if(Number.isNaN(value.getTime())) throw new TypeError("Expected a valid task date")
-        return value.toISOString().slice(0, 10)
-    }
-    if(typeof value === "string") return value.slice(0, 10)
-    throw new TypeError("Expected a task date as a Date or string")
-}
-
 function addInterval(value, recurrence) {
     if(!value) return null
-    const [year, month, day] = dateOnly(value).split("-").map(Number)
+    const [year, month, day] = value.slice(0, 10).split("-").map(Number)
     const date = new Date(Date.UTC(year, month - 1, day))
 
     if(recurrence === "daily") date.setUTCDate(date.getUTCDate() + 1)
@@ -120,8 +97,7 @@ router.get("/:id", async (req, res) => {
 
 // Create a new task for the authenticated user
 router.post("/", async (req, res) => {
-    const body = normalizeTaskDates(req.body ?? {})
-    const error = validateTask(body)
+    const error = validateTask(req.body ?? {})
     if(error) return res.status(400).json({ error })
 
     try {
@@ -129,9 +105,9 @@ router.post("/", async (req, res) => {
             INSERT INTO tasks
                 (user_id, title, description, completed, start_date, due_date, priority, recurrence, repeat_until)
             VALUES
-                (${req.user.id}, ${body.title.trim()}, ${body.description ?? null}, ${body.completed ?? false},
-                 ${body.start_date ?? null}, ${body.due_date ?? null}, ${body.priority ?? 2},
-                 ${body.recurrence ?? "none"}, ${body.repeat_until ?? null})
+                (${req.user.id}, ${req.body.title.trim()}, ${req.body.description ?? null}, ${req.body.completed ?? false},
+                 ${req.body.start_date ?? null}, ${req.body.due_date ?? null}, ${req.body.priority ?? 2},
+                 ${req.body.recurrence ?? "none"}, ${req.body.repeat_until ?? null})
             RETURNING id, user_id, title, description, completed, start_date, due_date, priority, recurrence, repeat_until
         `
         res.status(201).json(created[0])
@@ -143,8 +119,7 @@ router.post("/", async (req, res) => {
 
 // Update a task by id for the authenticated user
 router.put("/:id", async (req, res) => {
-    const body = normalizeTaskDates(req.body ?? {})
-    const error = validateTask(body)
+    const error = validateTask(req.body ?? {})
     if(error) return res.status(400).json({ error })
 
     try {
@@ -158,17 +133,17 @@ router.put("/:id", async (req, res) => {
             if(currentRows.length === 0) return null
 
             const current = currentRows[0]
-            const completed = body.completed ?? current.completed
+            const completed = req.body.completed ?? current.completed
             const rows = await transaction`
                 UPDATE tasks
-                SET title = ${body.title.trim()},
-                    description = ${body.description ?? null},
+                SET title = ${req.body.title.trim()},
+                    description = ${req.body.description ?? null},
                     completed = ${completed},
-                    start_date = ${body.start_date ?? null},
-                    due_date = ${body.due_date ?? null},
-                    priority = ${body.priority ?? current.priority},
-                    recurrence = ${body.recurrence ?? current.recurrence},
-                    repeat_until = ${body.repeat_until ?? null}
+                    start_date = ${req.body.start_date ?? null},
+                    due_date = ${req.body.due_date ?? null},
+                    priority = ${req.body.priority ?? current.priority},
+                    recurrence = ${req.body.recurrence ?? current.recurrence},
+                    repeat_until = ${req.body.repeat_until ?? null}
                 WHERE user_id = ${req.user.id} AND id = ${req.params.id}
                 RETURNING id, user_id, title, description, completed, start_date, due_date, priority, recurrence, repeat_until
             `
@@ -178,7 +153,7 @@ router.put("/:id", async (req, res) => {
                 const nextStart = addInterval(task.start_date, task.recurrence)
                 const nextDue = addInterval(task.due_date, task.recurrence)
                 const nextAnchor = nextDue ?? nextStart
-                if(nextAnchor && (!task.repeat_until || nextAnchor <= dateOnly(task.repeat_until))) {
+                if(nextAnchor && (!task.repeat_until || nextAnchor <= task.repeat_until)) {
                     await transaction`
                         INSERT INTO tasks
                             (user_id, title, description, start_date, due_date, priority, recurrence, repeat_until)
